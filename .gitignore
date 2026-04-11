@@ -1,0 +1,14 @@
+# Compiled OCaml files
+*.cmi
+*.cmo
+*.cmx
+*.o
+*.a
+*.cmxa
+*.cma
+
+# Binary executables
+test_matrix
+
+# Other
+.DS_Store
