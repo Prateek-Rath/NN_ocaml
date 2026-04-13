@@ -2,7 +2,6 @@ type layer
 
 type model
 
-
 val sigmoid : Matrix.matrix -> Matrix.matrix
 val softmax: Matrix.matrix -> Matrix.matrix
 val relu : Matrix.matrix -> Matrix.matrix
