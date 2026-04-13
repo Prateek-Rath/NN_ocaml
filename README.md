@@ -1,62 +1,191 @@
-# Functional Neural Network in OCaml - Detailed Documentation
+# 🧠 Functional Neural Network in OCaml — Simplified Documentation
 
-This project implements a fully functional neural network library from scratch in OCaml, following a pure functional paradigm. It avoids all mutable state, using higher-order functions and recursion for clean, predictable logic.
+This project builds a neural network from scratch in **OCaml**, using a **pure functional approach**.
 
-## Core Module: `Nn`
-
-The `Nn` module handles activations, derivatives, and loss functions. Below is a deep dive into the implementation details.
-
----
-
-### 1. Functional Abstractions (`map` and `map2`)
-To maintain a fully functional approach, we avoid iterative loops. Instead, we use higher-order functions from the `Matrix` module:
-
-- **`map`**: Used for all activation functions. It applies a function to every individual float in the matrix.
-- **`map2`**: Used for loss gradients and subtraction. It applies a binary function to elements at the same position in two different matrices.
-
-By abstracting the list recursion into `map` and `map2`, the logic in `nn.ml` remains focused on the math rather than the data traversal.
+- No mutable variables  
+- Uses recursion and higher-order functions  
+- Focus is on **clarity + mathematical correctness**
 
 ---
 
-### 2. Activation Functions & Their Logic
+# ⚙️ Core Module: `Nn`
 
-#### Sigmoid
-- **Implementation**: `let sigmoid_fn x = 1.0 /. (1.0 +. exp (-.x))`
-- **Derivative**: `s * (1.0 - s)`
-- **Detail**: We apply the derivative to the **post-activation** value. If you have already calculated `y = sigmoid(x)`, the gradient is simply `y * (1 - y)`. This saves us from re-calculating the exponential function during backpropagation.
-
-#### ReLU (Rectified Linear Unit)
-- **Implementation**: `if x > 0.0 then x else 0.0`
-- **Derivative**: `if x > 0.0 then 1.0 else 0.0`
-- **Detail**: Unlike Sigmoid, the ReLU derivative is calculated based on the **pre-activation** input (`x`). If the input was positive, it passes the gradient through (1.0); otherwise, it blocks it (0.0).
+The `Nn` module handles:
+- Activation functions
+- Their derivatives
+- Loss functions
 
 ---
 
-### 3. Loss Functions & Scaling
+# 1️⃣ Functional Abstractions (`map` and `map2`)
 
-The loss functions return a single `float` representing the average error across the entire batch/dataset.
+Instead of loops, we use:
 
-#### Mean Squared Error (MSE)
-- **Logic**: 
-  1. Calculate `(prediction - target)^2` for every element using `map2`.
-  2. Use `flatten` to turn the matrix into a single list of floats.
-  3. Use `List.fold_left` to sum the list.
-  4. Divide by $n$ (total number of elements) to get the average.
-- **Gradient**: `(2.0 / n) * (prediction - target)`. The `1/n` scaling ensures that gradients don't explode as the dataset size increases.
+## 🔹 `map`
+- Applies a function to every element in a matrix  
+- Used for **activations**
 
-#### Binary Cross Entropy (BCE)
-- **Logic**: Uses the formula `- [t * log(p) + (1-t) * log(1-p)]`.
-- **Numerical Stability**: We implement **Epsilon Shielding**. Before taking the `log`, we constrain the prediction `p` to be within `[1e-15, 1 - 1e-15]`. This prevents the code from attempting to calculate `log(0)`, which would return `NaN` or `-Infinity` and crash the training process.
-- **Gradient**: `(1/n) * (p - t) / (p * (1 - p))`. This provides the direction to update weights to minimize the classification error.
+👉 Example: Apply sigmoid to all values
 
 ---
 
-### 4. Genericity
-The library is "Generic" because it does not assume any specific shape for the matrices (rows or columns). 
-- It works for a single sample (vector) as well as a large batch (matrix).
-- It relies solely on the structure of `float list list`, making it compatible with any dataset that can be converted to floats.
+## 🔹 `map2`
+- Applies a function to corresponding elements of two matrices  
+- Used for:
+  - Loss computation
+  - Gradients
 
-## Summary of Logic Flow
-1. **Forward Pass**: Data enters -> `Matrix.matmul` -> `Nn.activation`.
-2. **Loss Calculation**: `Nn.mse` or `Nn.bce` calculates total error.
-3. **Backward Pass**: `Nn.loss_derivative` -> `Nn.activation_derivative` -> update weights.
+---
+
+## 💡 Why this is important
+
+- Keeps code **clean and reusable**
+- Separates:
+  - *math logic* (what to compute)
+  - *data traversal* (how to iterate)
+
+---
+
+# 2️⃣ Activation Functions
+
+## 🔹 Sigmoid
+
+$$
+\sigma(x) = \frac{1}{1 + e^{-x}}
+$$
+
+### ✔ Purpose
+- Converts values into range **(0, 1)**
+- Useful for probabilities
+
+---
+
+### ✔ Derivative
+
+$$
+\sigma'(x) = y(1 - y)
+$$
+
+(where \( y = \sigma(x) \))
+
+👉 Important:
+- Uses **post-activation value**
+- Avoids recomputing `exp`
+- Makes backprop faster
+
+---
+
+## 🔹 ReLU (Rectified Linear Unit)
+
+$$
+f(x) = \max(0, x)
+$$
+
+### ✔ Purpose
+- Keeps positive values
+- Zeros out negatives
+- Simple and fast
+
+---
+
+### ✔ Derivative
+
+$$
+f'(x) =
+\begin{cases}
+1 & x > 0 \\
+0 & x \le 0
+\end{cases}
+$$
+
+👉 Important:
+- Uses **pre-activation value (x)**
+- Needs original input before activation
+
+---
+
+# 3️⃣ Loss Functions
+
+Loss tells us:
+
+👉 *“How wrong is the model?”*
+
+---
+
+## 🔹 Mean Squared Error (MSE)
+
+$$
+\text{MSE} = \frac{1}{n} \sum (p - t)^2
+$$
+
+### ✔ Steps
+1. Compute `(prediction - target)^2` using `map2`
+2. Flatten matrix → list
+3. Sum values
+4. Divide by total elements \( n \)
+
+---
+
+### ✔ Gradient
+
+$$
+\frac{2}{n}(p - t)
+$$
+
+👉 Meaning:
+- If prediction is high → decrease it  
+- If low → increase it  
+
+---
+
+## 🔹 Binary Cross Entropy (BCE)
+
+$$
+L = -[t \log p + (1-t)\log(1-p)]
+$$
+
+### ✔ Purpose
+- Used for **binary classification**
+- Better than MSE for probabilities
+
+---
+
+### ⚠️ Numerical Stability (Very Important)
+
+Before applying log:
+
+$$
+p = \text{clamp}(p, 10^{-15}, 1 - 10^{-15})
+$$
+
+👉 Prevents:
+- `log(0)` → crash  
+- NaN / infinity values  
+
+---
+
+### ✔ Gradient
+
+$$
+\frac{1}{n} \cdot \frac{p - t}{p(1 - p)}
+$$
+
+👉 Meaning:
+- Confident wrong predictions → large updates  
+- Correct predictions → small updates  
+
+---
+
+# 4️⃣ Generic Design
+
+The implementation is **fully generic**:
+
+- Uses `float list list`
+- No fixed matrix size
+- Works for:
+  - Single input
+  - Batch inputs
+
+👉 Any dataset → as long as it can be converted to floats
+
+---
