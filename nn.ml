@@ -88,6 +88,7 @@ let bce_derivative pred target =
   ) pred target
   
 (* Categorical Cross Entropy: returns a single float scalar *)
+(* Here target must be a one hot vector *)
 let cross_entropy pred target =
   let epsilon = 1e-15 in
   let losses = map2 (fun p t ->
@@ -112,4 +113,13 @@ let cross_entropy_derivative pred target =
 (** Forward Pass **)
 (* take in model i.e a list of layers and input *)
 (* returns (activations, z_values) in reverse order for backprop *)
-        
+let forward model input = 
+        let rec help layers act_acc z_acc = 
+                match layers with 
+                | [] -> (act_acc, z_acc)
+                | layer:: rest -> 
+                  let xw = matmul (List.hd act_acc) layer.w in
+                  let xw_plus_b = List.map (fun row -> List.hd (add [row] layer.b)) xw in
+                  let next_act = if rest = [] then softmax xw_plus_b else relu xw_plus_b in
+                  help rest (next_act :: act_acc) (xw_plus_b::z_acc)
+        in help model [input] [] 

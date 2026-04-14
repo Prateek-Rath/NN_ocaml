@@ -20,3 +20,4 @@ val bce_derivative : Matrix.matrix -> Matrix.matrix -> Matrix.matrix
 val cross_entropy : Matrix.matrix -> Matrix.matrix -> float
 val cross_entropy_derivative : Matrix.matrix -> Matrix.matrix -> Matrix.matrix
 
+val forward: model -> Matrix.matrix -> Matrix.matrix list * Matrix.matrix list
