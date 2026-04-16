@@ -10,6 +10,12 @@ type layer = {
 (* a model is a list of layers *)
 type model = layer list
 
+(** Layer Initialization **)
+let init_layer rows cols =
+  (* Random.float 1.0 -. 0.5 returns [-0.5, 0.5) *)
+  let w = List.init rows (fun _ -> List.init cols (fun _ -> Random.float 1.0 -. 0.5)) in
+  let b = List.init 1 (fun _ -> List.init cols (fun _ -> 0.0)) in
+  { w = w; b = b }
 
 (** Activation Functions **)
 
@@ -123,3 +129,72 @@ let forward model input =
                   let next_act = if rest = [] then softmax xw_plus_b else relu xw_plus_b in
                   help rest (next_act :: act_acc) (xw_plus_b::z_acc)
         in help model [input] [] 
+
+(** Backward Pass **)
+(* returns a list of layers representing the gradients (same shape as model) *)
+let backward model acts zs target_y =
+  let batch_size_f = float_of_int (List.length target_y) in
+  let final_pred = List.hd acts in
+  
+  (* For softmax + categorical cross entropy, dZ_L = (Pred - Target) / batch_size *)
+  let dz_l = map2 (fun p t -> (p -. t) /. batch_size_f) final_pred target_y in
+  
+  let rec help rev_model acts_tl current_zs current_dz acc_grads =
+    match rev_model, acts_tl, current_zs with
+    | [], _, _ -> acc_grads
+    | layer :: rest_model, a_prev :: rest_acts, z :: rest_zs ->
+        let dw = matmul (transpose a_prev) current_dz in
+        let db = sum_axis_0 current_dz in
+        let layer_grad = { w = dw; b = db } in
+        
+        if rest_model = [] then
+          layer_grad :: acc_grads
+        else
+          let da_prev = matmul current_dz (transpose layer.w) in
+          let z_prev = List.hd rest_zs in
+          let dz_prev = mul_elementwise da_prev (relu_derivative z_prev) in
+          help rest_model rest_acts rest_zs dz_prev (layer_grad :: acc_grads)
+    | _ -> failwith "Mismatched shapes in backward lists"
+  in
+  help (List.rev model) (List.tl acts) zs dz_l []
+
+(** Update Layer & Model **)
+let update_layer lr layer grad =
+  { w = sub layer.w (mul_scalar lr grad.w);
+    b = sub layer.b (mul_scalar lr grad.b) }
+
+let update_model lr model grads =
+  List.map2 (update_layer lr) model grads
+
+(** Helper to split list into chunks **)
+let rec chunks l n =
+  let rec aux acc current i lst =
+    match lst with
+    | [] -> if current = [] then List.rev acc else List.rev (List.rev current :: acc)
+    | h :: t ->
+        if i = n then aux (List.rev current :: acc) [h] 1 t
+        else aux acc (h :: current) (i + 1) t
+  in
+  aux [] [] 0 l
+
+(** Training Loop with mini-batches **)
+let train model x y batch_size epochs lr =
+  let x_batches = chunks x batch_size in
+  let y_batches = chunks y batch_size in
+  let batches = List.combine x_batches y_batches in
+  
+  let rec loop current_model epoch =
+    if epoch = 0 then current_model
+    else
+      let new_model = List.fold_left (fun mod_acc (bx, by) ->
+        let (acts, zs) = forward mod_acc bx in
+        let grads = backward mod_acc acts zs by in
+        update_model lr mod_acc grads
+      ) current_model batches in
+      
+      let (acts, _) = forward new_model x in
+      let loss = cross_entropy (List.hd acts) y in
+      if true then Printf.printf "Epoch %d, Loss: %f\n%!" epoch loss;
+      loop new_model (epoch - 1)
+  in
+  loop model epochs

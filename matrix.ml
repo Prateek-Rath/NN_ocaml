@@ -57,6 +57,24 @@ let sum_axis_0 m =
       let init = List.init cols (fun _ -> 0.0) in
       [List.fold_left (fun acc row -> List.map2 (+.) acc row) init m]
 
+(** Max along axis 0 (columns) **)
+let max_axis_0 m =
+  match m with
+  | [] -> []
+  | first :: _ ->
+      let cols = List.length first in
+      let init = List.init cols (fun _ -> -.infinity) in
+      [List.fold_left (fun acc row -> List.map2 max acc row) init m]
+
+(** Min along axis 0 (columns) **)
+let min_axis_0 m =
+  match m with
+  | [] -> []
+  | first :: _ ->
+      let cols = List.length first in
+      let init = List.init cols (fun _ -> infinity) in
+      [List.fold_left (fun acc row -> List.map2 min acc row) init m]
+
 (** Element-wise product **)
 let mul_elementwise = map2 ( *. )
 

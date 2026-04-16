@@ -12,6 +12,8 @@ val add: matrix -> matrix -> matrix
 val sub: matrix -> matrix -> matrix
 val mul_scalar: float -> matrix -> matrix
 val sum_axis_0: matrix -> matrix
+val max_axis_0: matrix -> matrix
+val min_axis_0: matrix -> matrix
 val mul_elementwise: matrix -> matrix -> matrix
 val make: int -> int -> float -> matrix
 val flatten: matrix -> float list

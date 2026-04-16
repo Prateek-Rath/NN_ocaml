@@ -12,3 +12,11 @@ test_matrix
 
 # Other
 .DS_Store
+
+loan_data.csv
+test_nn
+train_loan
+*.cmi
+*.cmo
+*.o
+*.cmx
