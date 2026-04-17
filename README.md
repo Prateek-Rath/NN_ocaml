@@ -3,7 +3,7 @@
 A complete neural network implementation built **from scratch** in OCaml using a **pure functional approach** — no mutable state, no iterative loops, no external ML libraries.
 
 **Course:** Programming Languages  
-**Team:** Prateek Rath (IMT2022068), Ketan Ghungralekar (IMT2022058)
+**Team:** Prateek Rath (IMT2022017), Ketan Ghungralekar (IMT2022058)
 
 ---
 
