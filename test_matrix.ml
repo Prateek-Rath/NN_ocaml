@@ -15,6 +15,14 @@ let () =
   
   Printf.printf "Shape of M1: (%d, %d)\n" (fst (shape m1)) (snd (shape m1));
   
+  Printf.printf "Matrix M1:\n";
+  print_matrix m1;
+  
+  Printf.printf "Shape of M1: (%d, %d)\n" (fst (shape m1)) (snd (shape m1));
+
+  Printf.printf "M1 transpose:\n";
+  print_matrix (transpose m1);
+
   Printf.printf "M1 + M2:\n";
   print_matrix (add m1 m2);
   
@@ -36,3 +44,7 @@ let () =
   let m_zeros = make 2 3 0.0 in
   Printf.printf "2x3 Zeros:\n";
   print_matrix m_zeros;
+  
+  let min_axis_0_res = min_axis_0 m1 in
+  Printf.printf "min_axis_0 of M1:\n";
+  print_matrix min_axis_0_res
