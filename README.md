@@ -1,191 +1,154 @@
-# 🧠 Functional Neural Network in OCaml — Simplified Documentation
+# 🧠 Functional Neural Network from Scratch in OCaml
 
-This project builds a neural network from scratch in **OCaml**, using a **pure functional approach**.
+A complete neural network implementation built **from scratch** in OCaml using a **pure functional approach** — no mutable state, no iterative loops, no external ML libraries.
 
-- No mutable variables  
-- Uses recursion and higher-order functions  
-- Focus is on **clarity + mathematical correctness**
-
----
-
-# ⚙️ Core Module: `Nn`
-
-The `Nn` module handles:
-- Activation functions
-- Their derivatives
-- Loss functions
+**Course:** Programming Languages  
+**Team:** Prateek Rath (IMT2022068), Ketan Ghungralekar (IMT2022058)
 
 ---
 
-# 1️⃣ Functional Abstractions (`map` and `map2`)
+## ✨ Key Highlights
 
-Instead of loops, we use:
-
-## 🔹 `map`
-- Applies a function to every element in a matrix  
-- Used for **activations**
-
-👉 Example: Apply sigmoid to all values
+- **Pure Functional:** No `ref`, no `for`/`while` loops — only recursion, `map`, `fold`, and `map2`
+- **From Scratch:** Matrix library, activations, losses, forward pass, backpropagation, training loop — all hand-written
+- **Real-World Results:** Trained on 45,000 loan samples → **89.08% accuracy**
 
 ---
 
-## 🔹 `map2`
-- Applies a function to corresponding elements of two matrices  
-- Used for:
-  - Loss computation
-  - Gradients
+## 📁 Project Structure
+
+```
+NN_ocaml/
+├── matrix.ml          # Pure functional matrix library
+├── matrix.mli         # Matrix module interface
+├── nn.ml              # Neural network library (activations, losses, forward/backward, training)
+├── nn.mli             # Neural network module interface
+├── train_loan.ml      # Loan default prediction — CSV parsing, preprocessing, training
+├── test_matrix.ml     # Unit tests for matrix operations
+├── test_nn.ml         # Unit tests for NN primitives
+├── loan_data.csv      # Kaggle loan default dataset
+├── Makefile           # Build system
+└── report/
+    └── mid_eval_report.tex  # Mid-evaluation report (LaTeX)
+```
 
 ---
 
-## 💡 Why this is important
+## ⚙️ Module Architecture
 
-- Keeps code **clean and reusable**
-- Separates:
-  - *math logic* (what to compute)
-  - *data traversal* (how to iterate)
+### Matrix (`matrix.ml`)
 
----
+Pure functional matrix operations using `float list list`:
 
-# 2️⃣ Activation Functions
+| Operation | Function |
+|-----------|----------|
+| Transpose | `transpose` |
+| Dot product | `dot_product` |
+| Matrix multiply | `matmul` |
+| Element-wise ops | `map`, `map2`, `add`, `sub`, `mul_elementwise` |
+| Scalar multiply | `mul_scalar` |
+| Axis reductions | `sum_axis_0`, `max_axis_0`, `min_axis_0` |
+| Utilities | `make`, `flatten`, `shape` |
 
-## 🔹 Sigmoid
+### Neural Network (`nn.ml`)
 
-$$
-\sigma(x) = \frac{1}{1 + e^{-x}}
-$$
-
-### ✔ Purpose
-- Converts values into range **(0, 1)**
-- Useful for probabilities
-
----
-
-### ✔ Derivative
-
-$$
-\sigma'(x) = y(1 - y)
-$$
-
-(where \( y = \sigma(x) \))
-
-👉 Important:
-- Uses **post-activation value**
-- Avoids recomputing `exp`
-- Makes backprop faster
+| Component | Functions |
+|-----------|-----------|
+| Activation functions | `sigmoid`, `relu`, `tanh`, `softmax` |
+| Derivatives | `sigmoid_derivative`, `relu_derivative`, `tanh_derivative` |
+| Loss functions | `mse`, `bce`, `cross_entropy` |
+| Loss gradients | `mse_derivative`, `bce_derivative`, `cross_entropy_derivative` |
+| Training | `forward`, `backward`, `update_model`, `train` |
 
 ---
 
-## 🔹 ReLU (Rectified Linear Unit)
+## 🔢 Algorithms Implemented
 
-$$
-f(x) = \max(0, x)
-$$
+### Forward Pass
+Recursively traverses the layer list, computing $Z = XW + b$ and applying activation (ReLU for hidden layers, Softmax for output).
 
-### ✔ Purpose
-- Keeps positive values
-- Zeros out negatives
-- Simple and fast
+### Backpropagation
+Reverse traversal computing gradients via the chain rule. Uses the softmax + cross-entropy shortcut: $\delta_L = (\hat{Y} - Y) / m$.
 
----
-
-### ✔ Derivative
-
-$$
-f'(x) =
-\begin{cases}
-1 & x > 0 \\
-0 & x \le 0
-\end{cases}
-$$
-
-👉 Important:
-- Uses **pre-activation value (x)**
-- Needs original input before activation
+### Mini-Batch Gradient Descent
+Data split into batches → forward pass → backward pass → weight update per batch, repeated for configurable epochs.
 
 ---
 
-# 3️⃣ Loss Functions
+## 🚀 Building & Running
 
-Loss tells us:
+### Prerequisites
+- OCaml compiler (`ocamlc`)
 
-👉 *“How wrong is the model?”*
+### Build
+```bash
+make all       # Build everything
+make clean     # Remove compiled files
+make re        # Clean + rebuild
+```
 
----
-
-## 🔹 Mean Squared Error (MSE)
-
-$$
-\text{MSE} = \frac{1}{n} \sum (p - t)^2
-$$
-
-### ✔ Steps
-1. Compute `(prediction - target)^2` using `map2`
-2. Flatten matrix → list
-3. Sum values
-4. Divide by total elements \( n \)
-
----
-
-### ✔ Gradient
-
-$$
-\frac{2}{n}(p - t)
-$$
-
-👉 Meaning:
-- If prediction is high → decrease it  
-- If low → increase it  
+### Run
+```bash
+./test_matrix          # Run matrix tests
+./test_nn              # Run NN tests
+./train_loan           # Train on loan dataset
+```
 
 ---
 
-## 🔹 Binary Cross Entropy (BCE)
+## 📊 Results — Loan Default Prediction
 
-$$
-L = -[t \log p + (1-t)\log(1-p)]
-$$
+| Parameter | Value |
+|-----------|-------|
+| Dataset | Loan Default (Kaggle) |
+| Samples | 45,000 |
+| Features | 13 (age, income, employment, credit history, etc.) |
+| Architecture | 13 → 16 (ReLU) → 2 (Softmax) |
+| Loss Function | Categorical Cross-Entropy |
+| Batch Size | 32 |
+| Learning Rate | 0.01 |
+| Epochs | 20 |
 
-### ✔ Purpose
-- Used for **binary classification**
-- Better than MSE for probabilities
-
----
-
-### ⚠️ Numerical Stability (Very Important)
-
-Before applying log:
-
-$$
-p = \text{clamp}(p, 10^{-15}, 1 - 10^{-15})
-$$
-
-👉 Prevents:
-- `log(0)` → crash  
-- NaN / infinity values  
-
----
-
-### ✔ Gradient
-
-$$
-\frac{1}{n} \cdot \frac{p - t}{p(1 - p)}
-$$
-
-👉 Meaning:
-- Confident wrong predictions → large updates  
-- Correct predictions → small updates  
+### Training Output
+```
+Loading dataset (full)...
+Loaded 45000 samples.
+Starting training...
+Epoch 20, Loss: 0.311287
+Epoch 19, Loss: 0.278459
+...
+Epoch 2, Loss: 0.231218
+Epoch 1, Loss: 0.231184
+Final model loss: 0.231184
+Accuracy: 89.08%
+Time taken: 4.65 seconds
+```
 
 ---
 
-# 4️⃣ Generic Design
+## 🔬 Functional Programming Concepts Used
 
-The implementation is **fully generic**:
-
-- Uses `float list list`
-- No fixed matrix size
-- Works for:
-  - Single input
-  - Batch inputs
-
-👉 Any dataset → as long as it can be converted to floats
+| Concept | Usage |
+|---------|-------|
+| **Pure functions** | All functions are side-effect free (except I/O for CSV reading) |
+| **Recursion** | Replaces all loops — forward pass, backward pass, training, data chunking |
+| **Higher-order functions** | `map`, `map2`, `fold_left` for matrix operations and element-wise computation |
+| **Pattern matching** | Layer traversal, CSV parsing, feature encoding |
+| **Algebraic data types** | `layer` record type, `model` as layer list |
+| **Module interfaces** | `.mli` files for encapsulation — `layer` type is abstract externally |
+| **Immutable data** | All weight updates create new matrices, no in-place mutation |
 
 ---
+
+## 📄 Report
+
+The mid-evaluation report is available at [`report/mid_eval_report.tex`](report/mid_eval_report.tex). Compile with `pdflatex` or upload to [Overleaf](https://www.overleaf.com).
+
+---
+
+## 📚 References
+
+1. Michael Nielsen, *Neural Networks and Deep Learning*, 2015 — [neuralnetworksanddeeplearning.com](http://neuralnetworksanddeeplearning.com/chap2.html)
+2. Minsky, Madhavapeddy, Hickey, *Real World OCaml*, 2nd ed., 2022 — [dev.realworldocaml.org](https://dev.realworldocaml.org/)
+3. Leroy et al., *The OCaml System: Documentation*, INRIA, 2024 — [ocaml.org](https://v2.ocaml.org/api/)
+4. Goodfellow, Bengio, Courville, *Deep Learning*, MIT Press, 2016

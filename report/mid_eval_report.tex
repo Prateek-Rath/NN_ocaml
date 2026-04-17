@@ -1,0 +1,326 @@
+\documentclass[12pt, a4paper]{article}
+
+% ---- Packages ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{amsmath, amssymb}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ---- Colors ----
+\definecolor{ocamlbg}{RGB}{245, 245, 250}
+\definecolor{ocamlkw}{RGB}{0, 100, 180}
+\definecolor{ocamlstr}{RGB}{180, 60, 30}
+\definecolor{ocamlcmt}{RGB}{100, 140, 100}
+\definecolor{linkblue}{RGB}{0, 80, 160}
+
+% ---- Hyperref Setup ----
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkblue,
+    urlcolor=linkblue,
+    citecolor=linkblue,
+}
+
+% ---- Listings Setup for OCaml ----
+\lstdefinelanguage{OCaml}{
+  keywords={let, rec, in, match, with, fun, function, if, then, else, type, val, open, module, struct, sig, end, of, true, false, not},
+  keywordstyle=\color{ocamlkw}\bfseries,
+  commentstyle=\color{ocamlcmt}\itshape,
+  stringstyle=\color{ocamlstr},
+  morecomment=[s]{(*}{*)},
+  morestring=[b]",
+  sensitive=true,
+}
+
+\lstset{
+  language=OCaml,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{ocamlbg},
+  frame=single,
+  rulecolor=\color{gray!40},
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  tabsize=2,
+  showstringspaces=false,
+}
+
+% ---- Header / Footer ----
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Functional Neural Network in OCaml}
+\fancyhead[R]{\small Mid-Evaluation Report}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---- Section Formatting ----
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+% ====================================================================
+\begin{document}
+
+% ---- Title Page ----
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Functional Neural Network\\[0.3cm] from Scratch in OCaml\par}
+    
+    \vspace{1.5cm}
+    
+    {\Large\textit{Mid-Evaluation Report}\par}
+    
+    \vspace{2cm}
+    
+    {\large
+    \textbf{Course:} Programming Languages\\[0.5cm]
+    \textbf{Team Members:}\\[0.3cm]
+    \begin{tabular}{ll}
+        Prateek Rath & IMT2022068 \\
+        Ketan Ghungralekar & IMT2022058 \\
+    \end{tabular}
+    \par}
+    
+    \vspace{1.5cm}
+    
+    {\large
+    \textbf{GitHub Repository:}\\[0.2cm]
+    \url{https://github.com/Prateek-Rath/NN_ocaml}
+    \par}
+    
+    \vspace{2cm}
+    
+    {\large April 2026\par}
+    
+    \vfill
+\end{titlepage}
+
+% ====================================================================
+\section{Problem Description}
+
+\subsection{Motivation}
+
+Neural networks form the backbone of modern machine learning, yet the vast majority of implementations rely on imperative and object-oriented paradigms (Python with NumPy/PyTorch, C++, etc.). This project explores whether a fully functional neural network---including matrix operations, forward propagation, backpropagation, and gradient descent---can be built \textbf{entirely from scratch} in OCaml using \textbf{pure functional programming principles}: no mutable state, no iterative loops, and no external machine-learning libraries.
+
+OCaml's strong static type system, algebraic data types, pattern matching, and first-class functions make it a compelling language for expressing mathematical abstractions cleanly. By implementing every component functionally, we aim to understand both the internals of neural networks and the strengths and limitations of functional programming for numerical computation.
+
+\subsection{Core Learning Objectives}
+
+\begin{enumerate}[leftmargin=1.5cm]
+    \item \textbf{Neural Network Internals:} Understand forward propagation, backpropagation (chain rule), and mini-batch gradient descent by implementing each from first principles---without relying on automatic differentiation or any external library.
+    
+    \item \textbf{Functional Programming in Practice:} Apply core functional programming concepts---pure functions, recursion, higher-order functions (\texttt{map}, \texttt{fold}, \texttt{map2}), algebraic data types, and module interfaces---to a real-world computational problem.
+    
+    \item \textbf{Immutability and Stateful Algorithms:} Explore how referential transparency and persistent data structures affect the design of inherently stateful algorithms like weight updates in gradient descent.
+\end{enumerate}
+
+\subsection{Intended Outcomes}
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item A modular, purely functional \textbf{matrix library} and \textbf{neural network library} in OCaml.
+    \item A trained model on a real-world dataset (loan default prediction) demonstrating end-to-end functionality.
+    \item A comparative study against an equivalent imperative Python/NumPy implementation (planned for final evaluation).
+\end{itemize}
+
+% ====================================================================
+\section{Solution Outline}
+
+\subsection{Module Architecture}
+
+The codebase is organized into clearly separated, reusable modules:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}llp{7cm}@{}}
+\toprule
+\textbf{Module} & \textbf{Files} & \textbf{Purpose} \\
+\midrule
+Matrix & \texttt{matrix.ml}, \texttt{matrix.mli} & Pure functional matrix library: transpose, dot product, matrix multiplication, element-wise operations (\texttt{map}, \texttt{map2}), scalar multiplication, axis reductions (\texttt{sum}, \texttt{max}, \texttt{min}). \\[0.3cm]
+Neural Network & \texttt{nn.ml}, \texttt{nn.mli} & Layer types, activation functions (sigmoid, ReLU, tanh, softmax) with derivatives, loss functions (MSE, BCE, cross-entropy) with gradients, forward pass, backpropagation, weight updates, mini-batch training loop. \\[0.3cm]
+Application & \texttt{train\_loan.ml} & CSV parsing, categorical feature encoding, min-max normalization, data shuffling, model construction, training, and accuracy evaluation on the loan dataset. \\[0.3cm]
+Tests & \texttt{test\_nn.ml}, \texttt{test\_matrix.ml} & Unit tests verifying correctness of matrix operations and neural network primitives. \\
+\bottomrule
+\end{tabular}
+\caption{Module architecture of the project.}
+\end{table}
+
+\subsection{Key Design Decisions}
+
+\begin{enumerate}[leftmargin=1.5cm]
+    \item \textbf{Pure Functional Style:} The entire codebase avoids mutable references (\texttt{ref}) and imperative loops (\texttt{for}, \texttt{while}). All iteration is achieved through recursion, \texttt{List.map}, \texttt{List.map2}, and \texttt{List.fold\_left}.
+    
+    \item \textbf{Matrix Representation as \texttt{float list list}:} Matrices are represented as lists of lists of floats. This keeps the representation transparent and easy to reason about, at the cost of cache performance compared to contiguous arrays.
+    
+    \item \textbf{Module Interfaces (\texttt{.mli} files):} OCaml's module system is used for encapsulation. Notably, the \texttt{layer} type is kept abstract in the \texttt{Nn} interface, exposing only the operations needed by client code.
+    
+    \item \textbf{Generic Architecture:} The neural network library is not tied to any specific dataset or architecture. Layer sizes, activation functions, and loss functions are configurable, making the library reusable.
+\end{enumerate}
+
+\subsection{Algorithm Description}
+
+The core algorithms implemented are:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Forward Pass:} Recursively traverses the layer list, computing $Z = XW + b$ at each layer and applying the appropriate activation function (ReLU for hidden layers, softmax for the output layer). Accumulates activations and pre-activation values for use in backpropagation.
+    
+    \item \textbf{Backward Pass (Backpropagation):} Traverses the layers in reverse, computing gradients of the loss with respect to weights and biases using the chain rule. For the output layer with softmax + categorical cross-entropy, the gradient simplifies to:
+    \[
+        \frac{\partial \mathcal{L}}{\partial Z_L} = \frac{\hat{Y} - Y}{m}
+    \]
+    where $m$ is the batch size. For hidden layers, the ReLU derivative is applied element-wise.
+    
+    \item \textbf{Mini-Batch Gradient Descent:} The training data is split into fixed-size batches. For each batch, a forward pass produces predictions, a backward pass computes gradients, and the model weights are updated:
+    \[
+        W \leftarrow W - \eta \cdot \nabla_W \mathcal{L}
+    \]
+    This is repeated for a configurable number of epochs.
+\end{itemize}
+
+\subsection{Example: Loan Default Prediction}
+
+The system was trained on a real-world loan default dataset to demonstrate end-to-end functionality.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Dataset & Loan Default (Kaggle) \\
+Samples & 45{,}000 \\
+Features & 13 (age, income, employment, credit history, etc.) \\
+Task & Binary classification (default / no default) \\
+Architecture & 13 $\rightarrow$ 16 (ReLU) $\rightarrow$ 2 (Softmax) \\
+Loss Function & Categorical Cross-Entropy \\
+Batch Size & 32 \\
+Learning Rate & 0.01 \\
+Epochs & 20 \\
+\bottomrule
+\end{tabular}
+\caption{Training configuration.}
+\end{table}
+
+\noindent\textbf{Results:}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Initial Loss (Epoch 20) & 0.3113 \\
+Final Loss (Epoch 1) & 0.2312 \\
+Final Accuracy & \textbf{89.08\%} \\
+Training Time & 4.65 seconds \\
+\bottomrule
+\end{tabular}
+\caption{Training results on the loan dataset.}
+\end{table}
+
+The model achieves consistent loss reduction across epochs and converges to a strong accuracy, demonstrating that the purely functional implementation is both correct and practical for real-world data.
+
+% ====================================================================
+\section{Main References}
+
+\begin{enumerate}[leftmargin=1.5cm]
+    \item \textbf{Michael A.\ Nielsen}, \textit{Neural Networks and Deep Learning}, Determination Press, 2015.\\
+    \url{http://neuralnetworksanddeeplearning.com/chap2.html}\\
+    \textit{Relevance:} Primary reference for understanding and implementing the backpropagation algorithm from first principles. Chapter 2 provides a clear, mathematical derivation of the chain rule applied to feedforward networks.
+    
+    \item \textbf{Yaron Minsky, Anil Madhavapeddy, Jason Hickey}, \textit{Real World OCaml}, 2nd edition, O'Reilly Media, 2022.\\
+    \url{https://dev.realworldocaml.org/}\\
+    \textit{Relevance:} Reference for OCaml's module system, algebraic data types, pattern matching, and idiomatic functional programming patterns used throughout the codebase.
+    
+    \item \textbf{Xavier Leroy et al.}, \textit{The OCaml System: Documentation and User's Manual}, INRIA, 2024.\\
+    \url{https://v2.ocaml.org/api/}\\
+    \textit{Relevance:} Official language documentation for OCaml's standard library functions (\texttt{List.map}, \texttt{List.fold\_left}, \texttt{List.map2}, etc.) and module interface specifications used in the implementation.
+    
+    \item \textbf{Ian Goodfellow, Yoshua Bengio, Aaron Courville}, \textit{Deep Learning}, MIT Press, 2016, Chapters 6--8.\\
+    \textit{Relevance:} Provides the formal mathematical foundations for feedforward networks, loss functions (MSE, cross-entropy), activation functions (sigmoid, ReLU, softmax), and optimization via gradient descent that guided the implementation.
+\end{enumerate}
+
+% ====================================================================
+\section{Team Progress}
+
+\subsection{Milestones Completed}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lcp{7.5cm}@{}}
+\toprule
+\textbf{Milestone} & \textbf{Status} & \textbf{Description} \\
+\midrule
+Matrix Library & \checkmark & Pure functional matrix operations---transpose, dot product, matrix multiplication, element-wise ops, axis reductions, \texttt{map}/\texttt{map2}. \\[0.2cm]
+Activation Functions & \checkmark & Sigmoid, ReLU, Tanh, Softmax with their analytical derivatives. \\[0.2cm]
+Loss Functions & \checkmark & MSE, Binary Cross-Entropy, Categorical Cross-Entropy with gradient functions. \\[0.2cm]
+Forward Pass & \checkmark & Recursive forward propagation through the layer list. \\[0.2cm]
+Backward Pass & \checkmark & Full backpropagation with gradient computation using the chain rule. \\[0.2cm]
+Mini-Batch Training & \checkmark & Training loop with configurable batch size, learning rate, and epochs. \\[0.2cm]
+Loan Dataset Training & \checkmark & End-to-end training on 45{,}000 samples achieving 89.08\% accuracy. \\[0.2cm]
+Module Interfaces & \checkmark & \texttt{.mli} files for both Matrix and Nn modules providing clean API boundaries. \\[0.2cm]
+Unit Tests & \checkmark & Tests for matrix operations and neural network primitives. \\
+\bottomrule
+\end{tabular}
+\caption{Project milestones.}
+\end{table}
+
+\subsection{Challenges Faced}
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Numerical Stability:} Computing \texttt{log(0)} in cross-entropy and overflow in the exponential for softmax caused \texttt{NaN} and \texttt{infinity} values. Solved by epsilon clamping ($\varepsilon = 10^{-15}$) and max-value subtraction in softmax.
+    
+    \item \textbf{Backpropagation Correctness:} Debugging gradient computation in a purely functional setting---where intermediate values cannot be inspected via mutation---was challenging. Correctness was verified by observing consistent loss reduction and comparing convergence behavior against a Python reference.
+    
+    \item \textbf{Performance:} OCaml's \texttt{float list list} representation is not cache-friendly compared to contiguous arrays (e.g., NumPy). This is an accepted tradeoff for functional purity and simplicity.
+    
+    \item \textbf{Data Shuffling:} Implementing a pure functional shuffle (no in-place mutation) was achieved by tagging elements with random keys and sorting.
+\end{itemize}
+
+\subsection{Remaining Work}
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Python/NumPy Comparison:} Implement an equivalent iterative neural network from scratch in Python using NumPy, trained on the same dataset. Compare execution time, code complexity, and convergence behavior against the OCaml functional implementation.
+    \item \textbf{Additional Benchmarking:} Test on additional datasets and network architectures to further validate generality.
+\end{itemize}
+
+% ====================================================================
+\section{Work Distribution}
+
+The work was distributed collaboratively between both team members, with each taking the lead on different components:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Task} & \textbf{Prateek Rath} & \textbf{Ketan Ghungralekar} \\
+\midrule
+Matrix Operations (partial) & \checkmark & \\
+Matrix Operations (remaining) & & \checkmark \\
+NN Core Functions (activations, losses) & \checkmark & \\
+Forward Propagation & & \checkmark \\
+Backward Propagation & \checkmark & \\
+Training Loop & & \checkmark \\
+Data Pipeline \& Preprocessing & \checkmark & \checkmark \\
+Testing \& Debugging & \checkmark & \checkmark \\
+Report \& Documentation & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\caption{Work distribution between team members.}
+\end{table}
+
+% ====================================================================
+
+\end{document}
