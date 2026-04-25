@@ -102,17 +102,29 @@ let () =
   let preds = List.hd acts in
   let final_loss = Nn.cross_entropy preds y in
   Printf.printf "Final model loss: %f\n" final_loss;
-  
-  (* Calculate accuracy *)
-  let correct = List.fold_left2 (fun acc p t ->
+
+  (* Calculate accuracy, TP, FP, TN, FN *)
+  let (correct, tp, fp, tn, fn) = List.fold_left2 (fun (a, tp, fp, tn, fn) p t ->
     let p0 = List.hd p in
     let p1 = List.hd (List.tl p) in
     let is_class_1 = p1 > p0 in
     let is_target_1 = (List.hd (List.tl t)) = 1.0 in
-    if is_class_1 = is_target_1 then acc + 1 else acc
-  ) 0 preds y in
+    let new_a = if is_class_1 = is_target_1 then a + 1 else a in
+    let new_tp = if is_class_1 && is_target_1 then tp + 1 else tp in
+    let new_fp = if is_class_1 && not is_target_1 then fp + 1 else fp in
+    let new_tn = if not is_class_1 && not is_target_1 then tn + 1 else tn in
+    let new_fn = if not is_class_1 && is_target_1 then fn + 1 else fn in
+    (new_a, new_tp, new_fp, new_tn, new_fn)
+  ) (0, 0, 0, 0, 0) preds y in
   let total = List.length y in
   let accuracy = float_of_int correct /. float_of_int total *. 100.0 in
+  let precision = if (tp + fp) = 0 then 0.0 else float_of_int tp /. float_of_int (tp + fp) in
+  let recall = if (tp + fn) = 0 then 0.0 else float_of_int tp /. float_of_int (tp + fn) in
+  let f1 = if (precision +. recall) = 0.0 then 0.0 else 2.0 *. (precision *. recall) /. (precision +. recall) in
   Printf.printf "Accuracy: %.2f%%\n" accuracy;
-  Printf.printf "Time taken: %.2f seconds\n" (end_time -. start_time)
+  Printf.printf "Precision: %.4f, Recall: %.4f, F1-Score: %.4f\n" precision recall f1;
+  Printf.printf "Confusion Matrix - TP: %d, FP: %d, TN: %d, FN: %d\n" tp fp tn fn;
+  let train_time = end_time -. start_time in
+  Printf.printf "Time taken: %.2f seconds\n" train_time;
+  Printf.printf "Throughput: %.2f samples/sec\n" (float_of_int (total * epochs) /. train_time);
 
