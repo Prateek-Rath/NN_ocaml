@@ -134,11 +134,11 @@ let forward model input =
 (* returns a list of layers representing the gradients (same shape as model) *)
 (* here dvar = dL / dvar *)
 let backward model acts zs target_y =
-  let batch_size_f = float_of_int (List.length target_y) in
+  (* let batch_size_f = float_of_int (List.length target_y) in *)
   let final_pred = List.hd acts in
   
   (* For softmax + categorical cross entropy, dZ_L = (Pred - Target) / batch_size *)
-  let dz_l = map2 (fun p t -> (p -. t) /. batch_size_f) final_pred target_y in
+  let dz_l = cross_entropy_derivative final_pred target_y in
   
   let rec help rev_model acts_tl current_zs current_dz acc_grads =
     match rev_model, acts_tl, current_zs with

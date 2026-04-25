@@ -52,11 +52,6 @@ let min_max_scale m =
   let min_vals = List.hd (Matrix.min_axis_0 m) in
   let max_vals = List.hd (Matrix.max_axis_0 m) in
   let diffs = List.map2 (fun mx mn -> let d = mx -. mn in if d = 0.0 then 1.0 else d) max_vals min_vals in
-  Matrix.map2 (fun row_el idx -> 
-      (* we can't use map2 easily without index, so let's write a small helper *)
-      0.0
-    ) m m (* won't work perfectly that way, let's just map explicitly *)
-  |> ignore;
   
   List.map (fun row ->
     let rec scale_row r mins diffs_l =
