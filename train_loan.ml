@@ -47,7 +47,7 @@ let read_dataset filename max_samples =
   in
   loop [] [] false 0
 
-(* functional min-max scaler *)
+(* functional min-max scaler x' = (x-min)/(max-min)*) 
 let min_max_scale m =
   let min_vals = List.hd (Matrix.min_axis_0 m) in
   let max_vals = List.hd (Matrix.max_axis_0 m) in
