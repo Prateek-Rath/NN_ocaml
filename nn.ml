@@ -13,7 +13,7 @@ type model = layer list
 (** Layer Initialization **)
 let init_layer rows cols =
   (* Random.float 1.0 -. 0.5 returns [-0.5, 0.5) *)
-  let w = List.init rows (fun _ -> List.init cols (fun _ -> Random.float 1.0 -. 0.5)) in
+  let w = List.init rows (fun _ -> List.init cols (fun _ -> Random.float 0.5)) in
   let b = List.init 1 (fun _ -> List.init cols (fun _ -> 0.0)) in
   { w = w; b = b }
 
