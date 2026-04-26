@@ -20,3 +20,11 @@ train_loan
 *.cmo
 *.o
 *.cmx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
