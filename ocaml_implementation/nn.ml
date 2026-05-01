@@ -138,7 +138,7 @@ let backward model acts zs target_y =
   let final_pred = List.hd acts in
   
   (* For softmax + categorical cross entropy, dZ_L = (Pred - Target) / batch_size *)
-  let dz_l = cross_entropy_derivative final_pred target_y in
+  let dz_L = cross_entropy_derivative final_pred target_y in
   
   let rec help rev_model acts_tl current_zs current_dz acc_grads =
     match rev_model, acts_tl, current_zs with
@@ -164,7 +164,7 @@ let backward model acts zs target_y =
     | _ -> failwith "Mismatched shapes in backward lists"
   in
   (* reverse the model because forwarad returns acts and zs reversed *)
-  help (List.rev model) (List.tl acts) zs dz_l []
+  help (List.rev model) (List.tl acts) zs dz_L []
 
 
 (** Update Layer & Model **)
